@@ -15,6 +15,9 @@
  * @uses $hideGalleys bool Hide the article galleys for this article?
  * @uses $primaryGenreIds array List of file genre ids for primary file types
  * @uses $heading string HTML heading element, default: h2
+ * @uses $hidePageNumbers bool Hide pagenumbers for this article?
+ * @uses $issueUrl string issue url
+ * @uses $issueName string issue name
  *}
 {assign var=articlePath value=$article->getBestId()}
 {if !$heading}
@@ -29,7 +32,7 @@
 <div class="obj_article_summary">
 	{if $publication->getLocalizedData('coverImage')}
 		<div class="cover">
-			<a {if $journal}href="{url journal=$journal->getPath() page="article" op="view" path=$articlePath}"{else}href="{url page="article" op="view" path=$articlePath}"{/if} class="file">
+			<a {if $journal}href="{url journal=$journal->getPath() page="article" op="view" path=$articlePath}"{else}href="{url page="articles" op="view" path=$articlePath}"{/if} class="file">
 				{assign var="coverImage" value=$article->getCurrentPublication()->getLocalizedData('coverImage')}
 				<img
 					src="{$article->getCurrentPublication()->getLocalizedCoverImageUrl($article->getData('contextId'))|escape}"
@@ -40,7 +43,7 @@
 	{/if}
 
 	<{$heading} class="title">
-		<a id="article-{$article->getId()}" {if $journal}href="{url journal=$journal->getPath() page="article" op="view" path=$articlePath}"{else}href="{url page="article" op="view" path=$articlePath}"{/if}>
+		<a id="article-{$article->getId()}" {if $journal}href="{url journal=$journal->getPath() page="articles" op="view" path=$articlePath}"{else}href="{url page="articles" op="view" path=$articlePath}"{/if}>
 			{assign var=publication value=$article->getCurrentPublication()}
 			{$publication->getLocalizedTitle(null, 'html')|strip_unsafe_html}
 			{if $publication->getLocalizedSubtitle()}
@@ -51,8 +54,15 @@
 		</a>
 	</{$heading}>
 
-	{if $showAuthor || $article->getPages() || ($article->getDatePublished() && $showDatePublished)}
+	{if $issueName || $showAuthor || $article->getPages() || ($article->getDatePublished() && $showDatePublished)}
 	<div class="meta">
+
+		{if $issueName}
+			<div class="issue">
+				<a href="{$issueUrl|escape}">{$issueName|escape}</a>
+			</div>
+		{/if}
+
 		{if $showAuthor}
 		<div class="authors">
 			{$publication->getAuthorString($authorUserGroups)|escape}
@@ -60,7 +70,7 @@
 		{/if}
 
 		{* Page numbers for this article *}
-		{if $article->getPages()}
+		{if !$hidePageNumbers && $article->getPages()}
 			<div class="pages">
 				{$article->getPages()|escape}
 			</div>

@@ -59,7 +59,7 @@
 				<item>
 					{* required elements *}
 					<title>{$article->getLocalizedTitle()|strip|escape:"html"}</title>
-					<link>{url page="article" op="view" path=$article->getBestId()}</link>
+					<link>{url page="articles" op="view" path=$article->getBestId()}</link>
 					<description>{$article->getLocalizedAbstract()|strip|escape:"html"}</description>
 
 					{* optional elements *}
@@ -81,7 +81,7 @@
 						<cc:license></cc:license>
 					{/if}
 
-					<guid isPermaLink="true">{url page="article" op="view" path=$article->getBestId()}</guid>
+					<guid isPermaLink="true">{url page="articles" op="view" path=$article->getBestId()}</guid>
 					{if $article->getDatePublished()}
 						{capture assign="datePublished"}{$article->getDatePublished()|strtotime}{/capture}
 						<pubDate>{$smarty.const.DATE_RSS|date:$datePublished}</pubDate>
