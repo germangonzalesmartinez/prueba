@@ -59,7 +59,7 @@
 			<rdf:Seq>
 			{foreach name=sections from=$publishedSubmissions item=section key=sectionId}
 				{foreach from=$section.articles item=article}
-					<rdf:li rdf:resource="{url page="article" op="view" path=$article->getBestId()}"/>
+					<rdf:li rdf:resource="{url page="articles" op="view" path=$article->getBestId()}"/>
 				{/foreach}{* articles *}
 			{/foreach}{* sections *}
 			</rdf:Seq>
@@ -69,11 +69,11 @@
 {foreach name=sections from=$publishedSubmissions item=section key=sectionId}
 	{foreach from=$section.articles item=article}
 		{assign var=publication value=$article->getCurrentPublication()}
-		<item rdf:about="{url page="article" op="view" path=$article->getBestId()}">
+		<item rdf:about="{url page="articles" op="view" path=$article->getBestId()}">
 
 			{* required elements *}
 			<title>{$article->getLocalizedTitle()|strip|escape:"html"}</title>
-			<link>{url page="article" op="view" path=$article->getBestId()}</link>
+			<link>{url page="articles" op="view" path=$article->getBestId()}</link>
 
 			{* optional elements *}
 			{if $article->getLocalizedAbstract()}
