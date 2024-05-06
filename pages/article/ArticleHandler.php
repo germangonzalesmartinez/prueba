@@ -25,19 +25,23 @@ use APP\issue\IssueAction;
 use APP\observers\events\UsageEvent;
 use APP\payment\ojs\OJSCompletedPaymentDAO;
 use APP\payment\ojs\OJSPaymentManager;
+use APP\publication\Publication;
 use APP\security\authorization\OjsJournalMustPublishPolicy;
 use APP\submission\Submission;
 use APP\template\TemplateManager;
 use Firebase\JWT\Key;
 use PKP\citation\CitationDAO;
 use PKP\config\Config;
+use PKP\context\Context;
 use PKP\core\PKPApplication;
 use PKP\core\PKPJwt as JWT;
 use PKP\db\DAORegistry;
+use PKP\facades\Locale;
 use PKP\plugins\Hook;
 use PKP\plugins\PluginRegistry;
 use PKP\security\authorization\ContextRequiredPolicy;
 use PKP\security\Validation;
+use PKP\services\PKPSchemaService;
 use PKP\submission\Genre;
 use PKP\submission\GenreDAO;
 use PKP\submission\PKPSubmission;
@@ -356,6 +360,13 @@ class ArticleHandler extends Handler
                 $templateMgr->assign('purchaseArticleEnabled', true);
             }
 
+            $templateMgr->assign('pubLocaleData', $this->getPublicationLocaleData(
+                $publication,
+                $templateMgr->getTemplateVars('currentLocale'),
+                $templateMgr->getTemplateVars('activeTheme')->getOption('showMultilingualMetadata') ?: [],
+                $context
+            ));
+
             if (!Hook::call('ArticleHandler::view', [&$request, &$issue, &$article, $publication])) {
                 $templateMgr->display('frontend/pages/article.tpl');
                 event(new UsageEvent(Application::ASSOC_TYPE_SUBMISSION, $context, $article, null, null, $this->issue));
@@ -614,5 +625,50 @@ class ArticleHandler extends Handler
             $request->redirect(null, 'search');
         }
         return true;
+    }
+
+    /**
+     * Multilingual publication metadata for template:
+     * showMultilingualMetadataOpts - Show metadata in other languages: title (by default includes fullTitle and subtitle), keywords, abstract, etc.
+     */
+    protected function getPublicationLocaleData(Publication $publication, string $currentUILocale, array $showMultilingualMetadataOpts, Context $context): array
+    {
+        $submissionLocale = $publication->getData('locale');
+        $titles = collect([
+            'title' => $publication->getTitles('html'),
+            'subtitle' => $publication->getSubtitles('html'),
+            'fullTitle' => $publication->getFullTitles('html'),
+        ]);
+        $multilingualProps = collect(Services::get('schema')->getMultilingualProps(PKPSchemaService::SCHEMA_PUBLICATION))->diff($titles->keys());
+        $multilingualOpts = collect($showMultilingualMetadataOpts)
+            ->when(in_array('title', $showMultilingualMetadataOpts), fn ($m) => $m->concat($titles->keys())->unique()->values());
+        $titleLocale = isset($titles->get('title')[$currentUILocale]) ? $currentUILocale : $submissionLocale;
+        $uiLocales = collect($context->getSupportedLocaleNames());
+        $localeShowOrder = collect([$titleLocale, $currentUILocale, $submissionLocale])->concat($uiLocales->keys())->unique()->values();
+
+        $getText = fn (array $item, string $opt): array => [
+            $opt => [
+                // Select 1 text to show in some locale if not in $multilingualOpts
+                'text' => ($text = $multilingualOpts->contains($opt)
+                    ? $item
+                    : collect($item)->only([$localeShowOrder->concat(array_keys($item))->first(fn (string $l) => isset($item[$l]))])->toArray()),
+                // Show headings in supported ui locale if possible
+                'hLang' => collect($text)->map(fn ($_, string $locale): string => ($locale === $titleLocale || !$uiLocales->has($locale)) ? $currentUILocale : $locale)
+            ],
+        ];
+
+        $pubLocaleData = $titles->mapWithKeys($getText)
+            ->union($multilingualProps->mapWithKeys(fn (string $opt): array => ($data = $publication->getData($opt)) ? $getText($data, $opt) : []))
+            ->filter();
+        $metadataLocales = $pubLocaleData->map(fn (array $item): array => array_keys($item['text']))->flatten()->unique()->sort()->values();
+        return $pubLocaleData
+            ->put('locales', $localeShowOrder
+                ->intersect($metadataLocales) // Remove ui locales not in $metadataLocales
+                ->concat($metadataLocales) // Show rest locales in alphabetical order
+                ->unique()
+                ->values())
+            ->put('localeNames', $uiLocales->map(fn ($_, string $l): array => Locale::getSubmissionLocaleDisplayNames($metadataLocales->toArray(), $l)))
+            ->put('titleLocale', $titleLocale)
+            ->toArray();
     }
 }
