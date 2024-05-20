@@ -256,4 +256,9 @@ class Application extends PKPApplication
     {
         return new OJSPaymentManager($context);
     }
+
+    public function getNamespace(): string
+    {
+        return 'APP\\';
+    }
 }
