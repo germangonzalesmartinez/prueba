@@ -1506,6 +1506,9 @@ msgstr "About the Journal"
 msgid "about.history"
 msgstr "Journal History"
 
+msgid "about.editorialMasthead.linkToEditorialHistory"
+msgstr "View <a href=\"{$url}\">Editorial History</a> for this journal"
+
 msgid "about.editorialPolicies"
 msgstr "Editorial Policies"
 
