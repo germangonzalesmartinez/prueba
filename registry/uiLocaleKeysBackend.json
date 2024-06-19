@@ -166,6 +166,14 @@
   "doi.manager.versions.countStatement",
   "doi.manager.versions.modalTitle",
   "doi.manager.versions.view",
+<<<<<<< HEAD
+  "editor.review.logResponse",
+  "editor.review.logResponse.for",
+  "editor.review.logResponse.form.detail",
+  "editor.review.logResponse.form.option.accepted",
+  "editor.review.logResponse.form.option.declined",
+  "editor.review.logResponse.form.subDetail",
+=======
   "editor.review.cancelReviewer",
   "editor.review.resendRequestReviewer",
   "editor.review.reviewDetails",
@@ -173,6 +181,7 @@
   "editor.submission.addStageParticipant",
   "editor.submission.decision.requestRevisions",
   "editor.submission.schedulePublication",
+>>>>>>> main
   "editor.submission.search",
   "editor.submissionArchive.confirmDelete",
   "editor.submissionReview.editReview",
